@@ -13,7 +13,6 @@ import json
 import time
 import os
 from pathlib import Path
-from PIL import Image
 
 # ============================================
 # PATHS CONFIGURATION
@@ -572,8 +571,7 @@ def main():
         # Display model comparison chart
         model_comparison_path = ASSETS_DIR / "model_comparison.png"
         if model_comparison_path.exists():
-            img = Image.open(model_comparison_path)
-            st.image(img, caption="Model Performance Comparison - Accuracy, Precision, Recall, F1 Score, and ROC-AUC", use_column_width=True)
+            st.image(str(model_comparison_path), caption="Model Performance Comparison - Accuracy, Precision, Recall, F1 Score, and ROC-AUC", use_column_width=True)
         else:
             st.info("Model comparison chart not available. Run training script to generate.")
         
@@ -591,8 +589,7 @@ def main():
         
         confusion_matrices_path = ASSETS_DIR / "confusion_matrices.png"
         if confusion_matrices_path.exists():
-            img = Image.open(confusion_matrices_path)
-            st.image(img, caption="Confusion Matrices for All Models", use_column_width=True)
+            st.image(str(confusion_matrices_path), caption="Confusion Matrices for All Models", use_column_width=True)
         else:
             st.info("Confusion matrices not available. Run training script to generate.")
         
@@ -612,8 +609,7 @@ def main():
         
         feature_importance_path = ASSETS_DIR / "feature_importance.png"
         if feature_importance_path.exists():
-            img = Image.open(feature_importance_path)
-            st.image(img, caption="Feature Importance - Random Forest Model", use_column_width=True)
+            st.image(str(feature_importance_path), caption="Feature Importance - Random Forest Model", use_column_width=True)
         else:
             st.info("Feature importance chart not available. Run training script to generate.")
         
@@ -658,8 +654,7 @@ def main():
         st.markdown("#### 📊 Data Distribution Analysis")
         eda_path = ASSETS_DIR / "eda_visualization.png"
         if eda_path.exists():
-            img = Image.open(eda_path)
-            st.image(img, caption="Exploratory Data Analysis - Target Distribution, Age Distribution, and Feature Correlations", use_column_width=True)
+            st.image(str(eda_path), caption="Exploratory Data Analysis - Target Distribution, Age Distribution, and Feature Correlations", use_column_width=True)
         else:
             st.info("EDA visualization not available. Run training script to generate.")
         
@@ -674,8 +669,7 @@ def main():
         
         correlation_path = ASSETS_DIR / "correlation_heatmap.png"
         if correlation_path.exists():
-            img = Image.open(correlation_path)
-            st.image(img, caption="Feature Correlation Heatmap", use_column_width=True)
+            st.image(str(correlation_path), caption="Feature Correlation Heatmap", use_column_width=True)
         else:
             st.info("Correlation heatmap not available. Run training script to generate.")
         
