@@ -156,8 +156,8 @@ st.markdown("""
 # ============================================
 # API CONFIGURATION
 # ============================================
-# Use environment variable for production, fallback to localhost for development
-DEFAULT_API_URL = os.environ.get("API_URL", "http://localhost:8000")
+# Use environment variable for production, fallback to Render backend
+DEFAULT_API_URL = os.environ.get("API_URL", "https://heart-disease-backend-65ie.onrender.com")
 API_URL = st.sidebar.text_input(
     "API URL",
     value=DEFAULT_API_URL,
