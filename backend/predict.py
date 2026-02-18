@@ -47,6 +47,12 @@ class HeartDiseasePredictor:
         Get the correct path to model files.
         Handles different directory structures.
         """
+        # Debug: Print current working directory
+        cwd = os.getcwd()
+        print(f"🔍 Current working directory: {cwd}")
+        print(f"🔍 __file__ location: {__file__}")
+        print(f"🔍 Looking for: {filename}")
+        
         # Try different possible paths
         possible_paths = [
             os.path.join('model', filename),
@@ -57,8 +63,22 @@ class HeartDiseasePredictor:
         ]
         
         for path in possible_paths:
-            if os.path.exists(path):
+            abs_path = os.path.abspath(path)
+            exists = os.path.exists(path)
+            print(f"   Checking: {path} -> {abs_path} (exists: {exists})")
+            if exists:
+                print(f"✅ Found at: {path}")
                 return path
+        
+        # List directory contents for debugging
+        print(f"❌ Model file not found. Listing directories...")
+        try:
+            print(f"   Contents of cwd ({cwd}): {os.listdir(cwd)}")
+            model_dir = os.path.join(cwd, 'model')
+            if os.path.exists(model_dir):
+                print(f"   Contents of model/: {os.listdir(model_dir)}")
+        except Exception as e:
+            print(f"   Error listing: {e}")
         
         # Return default path if none exist
         return os.path.join('model', filename)
