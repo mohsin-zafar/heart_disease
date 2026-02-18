@@ -7,7 +7,7 @@ services:
   # Backend API Service
   - type: web
     name: heart-disease-backend
-    env: python
+    runtime: python
     region: oregon
     plan: free
     rootDir: backend
@@ -16,14 +16,12 @@ services:
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
-      - key: ENVIRONMENT
-        value: production
+        value: "3.10.0"
 
   # Frontend Streamlit Service
   - type: web
     name: heart-disease-frontend
-    env: python
+    runtime: python
     region: oregon
     plan: free
     rootDir: frontend
@@ -31,9 +29,6 @@ services:
     startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.18
+        value: "3.10.0"
       - key: API_URL
-        fromService:
-          type: web
-          name: heart-disease-backend
-          property: url
+        value: https://heart-disease-backend.onrender.com
