@@ -1,0 +1,53 @@
+# ============================================
+# Heart Disease Detection - Docker Compose
+# ============================================
+# Run both backend and frontend with: docker-compose up
+
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: heart-disease-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./model:/app/model:ro
+    environment:
+      - ENVIRONMENT=development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - heart-disease-network
+
+  # Frontend Streamlit
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: heart-disease-frontend
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - heart-disease-network
+
+networks:
+  heart-disease-network:
+    driver: bridge
+
+volumes:
+  model-data:

@@ -1,0 +1,21 @@
+# Heart Disease Detection - Training Requirements
+# ================================================
+# Install in Google Colab with: pip install -r requirements.txt
+
+# Data Processing
+numpy==1.24.3
+pandas==2.1.3
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+
+# Machine Learning
+scikit-learn==1.3.2
+joblib==1.3.2
+
+# Progress Bar (optional)
+tqdm==4.66.1
+
+# Jupyter Support
+ipywidgets==8.1.1

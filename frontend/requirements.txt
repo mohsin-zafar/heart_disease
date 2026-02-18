@@ -1,0 +1,17 @@
+# Heart Disease Detection - Frontend Requirements
+# ================================================
+# Install with: pip install -r requirements.txt
+
+# Streamlit Web Framework
+streamlit==1.29.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Data Handling
+pandas==2.1.3
+numpy==1.24.3
+
+# Visualization (optional)
+plotly==5.18.0
+altair==5.2.0
