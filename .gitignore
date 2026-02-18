@@ -150,6 +150,8 @@ $RECYCLE.BIN/
 # Generated images
 *.png
 !screenshots/*.png
+!frontend/assets/*.png
+!training/*.png
 
 # Logs
 *.log

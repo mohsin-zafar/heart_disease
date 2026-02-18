@@ -12,6 +12,14 @@ import requests
 import json
 import time
 import os
+from pathlib import Path
+from PIL import Image
+
+# ============================================
+# PATHS CONFIGURATION
+# ============================================
+SCRIPT_DIR = Path(__file__).parent.resolve()
+ASSETS_DIR = SCRIPT_DIR / "assets"
 
 # ============================================
 # PAGE CONFIGURATION
@@ -254,285 +262,441 @@ def main():
         
         st.markdown("## 📊 Model Info")
         st.markdown("""
-        - **Algorithm:** Classification ML
+        - **Algorithm:** Random Forest
         - **Features:** 13 clinical parameters
-        - **Accuracy:** ~85%+
+        - **ROC-AUC:** 76.17%
+        - **Recall:** 75%
         """)
     
-    # Main content
-    col1, col2 = st.columns([1, 1])
+    # Navigation Tabs
+    tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "📊 Model Insights", "📈 Data Analysis"])
     
-    with col1:
-        st.markdown("### 📋 Patient Information")
+    # ============================================
+    # TAB 1: PREDICTION
+    # ============================================
+    with tab1:
+        # Main content
+        col1, col2 = st.columns([1, 1])
         
-        # Create form for patient data
-        with st.form("patient_form"):
-            # Row 1: Age and Sex
-            col_a, col_b = st.columns(2)
-            with col_a:
-                age = st.number_input(
-                    "Age",
-                    min_value=1,
-                    max_value=120,
-                    value=55,
-                    help="Patient's age in years"
-                )
-            with col_b:
-                sex = st.selectbox(
-                    "Sex",
-                    options=[("Male", 1), ("Female", 0)],
-                    format_func=lambda x: x[0],
-                    help="Patient's gender"
-                )
+        with col1:
+            st.markdown("### 📋 Patient Information")
             
-            # Row 2: Chest Pain and Blood Pressure
-            col_c, col_d = st.columns(2)
-            with col_c:
-                chest_pain_type = st.selectbox(
-                    "Chest Pain Type",
-                    options=[
-                        ("Typical Angina", 0),
-                        ("Atypical Angina", 1),
-                        ("Non-anginal Pain", 2),
-                        ("Asymptomatic", 3)
-                    ],
-                    format_func=lambda x: x[0],
-                    help="Type of chest pain experienced"
-                )
-            with col_d:
-                resting_bp = st.number_input(
-                    "Resting Blood Pressure (mm Hg)",
-                    min_value=50,
-                    max_value=300,
-                    value=130,
-                    help="Blood pressure on admission"
-                )
-            
-            # Row 3: Cholesterol and Fasting Blood Sugar
-            col_e, col_f = st.columns(2)
-            with col_e:
-                cholesterol = st.number_input(
-                    "Cholesterol (mg/dl)",
-                    min_value=100,
-                    max_value=600,
-                    value=250,
-                    help="Serum cholesterol level"
-                )
-            with col_f:
-                fasting_bs = st.selectbox(
-                    "Fasting Blood Sugar > 120 mg/dl",
-                    options=[("No", 0), ("Yes", 1)],
-                    format_func=lambda x: x[0],
-                    help="Is fasting blood sugar greater than 120 mg/dl?"
-                )
-            
-            # Row 4: Resting ECG and Max Heart Rate
-            col_g, col_h = st.columns(2)
-            with col_g:
-                resting_ecg = st.selectbox(
-                    "Resting ECG",
+            # Create form for patient data
+            with st.form("patient_form"):
+                # Row 1: Age and Sex
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    age = st.number_input(
+                        "Age",
+                        min_value=1,
+                        max_value=120,
+                        value=55,
+                        help="Patient's age in years"
+                    )
+                with col_b:
+                    sex = st.selectbox(
+                        "Sex",
+                        options=[("Male", 1), ("Female", 0)],
+                        format_func=lambda x: x[0],
+                        help="Patient's gender"
+                    )
+                
+                # Row 2: Chest Pain and Blood Pressure
+                col_c, col_d = st.columns(2)
+                with col_c:
+                    chest_pain_type = st.selectbox(
+                        "Chest Pain Type",
+                        options=[
+                            ("Typical Angina", 0),
+                            ("Atypical Angina", 1),
+                            ("Non-anginal Pain", 2),
+                            ("Asymptomatic", 3)
+                        ],
+                        format_func=lambda x: x[0],
+                        help="Type of chest pain experienced"
+                    )
+                with col_d:
+                    resting_bp = st.number_input(
+                        "Resting Blood Pressure (mm Hg)",
+                        min_value=50,
+                        max_value=300,
+                        value=130,
+                        help="Blood pressure on admission"
+                    )
+                
+                # Row 3: Cholesterol and Fasting Blood Sugar
+                col_e, col_f = st.columns(2)
+                with col_e:
+                    cholesterol = st.number_input(
+                        "Cholesterol (mg/dl)",
+                        min_value=100,
+                        max_value=600,
+                        value=250,
+                        help="Serum cholesterol level"
+                    )
+                with col_f:
+                    fasting_bs = st.selectbox(
+                        "Fasting Blood Sugar > 120 mg/dl",
+                        options=[("No", 0), ("Yes", 1)],
+                        format_func=lambda x: x[0],
+                        help="Is fasting blood sugar greater than 120 mg/dl?"
+                    )
+                
+                # Row 4: Resting ECG and Max Heart Rate
+                col_g, col_h = st.columns(2)
+                with col_g:
+                    resting_ecg = st.selectbox(
+                        "Resting ECG",
+                        options=[
+                            ("Normal", 0),
+                            ("ST-T Wave Abnormality", 1),
+                            ("Left Ventricular Hypertrophy", 2)
+                        ],
+                        format_func=lambda x: x[0],
+                        help="Resting electrocardiographic results"
+                    )
+                with col_h:
+                    max_hr = st.number_input(
+                        "Max Heart Rate (bpm)",
+                        min_value=60,
+                        max_value=250,
+                        value=150,
+                        help="Maximum heart rate achieved during exercise"
+                    )
+                
+                # Row 5: Exercise Angina and ST Depression
+                col_i, col_j = st.columns(2)
+                with col_i:
+                    exercise_angina = st.selectbox(
+                        "Exercise Induced Angina",
+                        options=[("No", 0), ("Yes", 1)],
+                        format_func=lambda x: x[0],
+                        help="Angina induced by exercise"
+                    )
+                with col_j:
+                    st_depression = st.number_input(
+                        "ST Depression",
+                        min_value=0.0,
+                        max_value=10.0,
+                        value=1.5,
+                        step=0.1,
+                        help="ST depression induced by exercise"
+                    )
+                
+                # Row 6: ST Slope and Major Vessels
+                col_k, col_l = st.columns(2)
+                with col_k:
+                    st_slope = st.selectbox(
+                        "ST Slope",
+                        options=[
+                            ("Upsloping", 0),
+                            ("Flat", 1),
+                            ("Downsloping", 2)
+                        ],
+                        format_func=lambda x: x[0],
+                        help="Slope of peak exercise ST segment"
+                    )
+                with col_l:
+                    num_vessels = st.selectbox(
+                        "Number of Major Vessels",
+                        options=[0, 1, 2, 3, 4],
+                        index=1,
+                        help="Number of major vessels colored by fluoroscopy"
+                    )
+                
+                # Row 7: Thalassemia
+                thalassemia = st.selectbox(
+                    "Thalassemia",
                     options=[
                         ("Normal", 0),
-                        ("ST-T Wave Abnormality", 1),
-                        ("Left Ventricular Hypertrophy", 2)
+                        ("Fixed Defect", 1),
+                        ("Reversible Defect", 2),
+                        ("Not Described", 3)
                     ],
                     format_func=lambda x: x[0],
-                    help="Resting electrocardiographic results"
+                    help="Thalassemia blood disorder type"
                 )
-            with col_h:
-                max_hr = st.number_input(
-                    "Max Heart Rate (bpm)",
-                    min_value=60,
-                    max_value=250,
-                    value=150,
-                    help="Maximum heart rate achieved during exercise"
+                
+                # Submit button
+                submitted = st.form_submit_button(
+                    "🔮 Predict Heart Disease Risk"
                 )
-            
-            # Row 5: Exercise Angina and ST Depression
-            col_i, col_j = st.columns(2)
-            with col_i:
-                exercise_angina = st.selectbox(
-                    "Exercise Induced Angina",
-                    options=[("No", 0), ("Yes", 1)],
-                    format_func=lambda x: x[0],
-                    help="Angina induced by exercise"
-                )
-            with col_j:
-                st_depression = st.number_input(
-                    "ST Depression",
-                    min_value=0.0,
-                    max_value=10.0,
-                    value=1.5,
-                    step=0.1,
-                    help="ST depression induced by exercise"
-                )
-            
-            # Row 6: ST Slope and Major Vessels
-            col_k, col_l = st.columns(2)
-            with col_k:
-                st_slope = st.selectbox(
-                    "ST Slope",
-                    options=[
-                        ("Upsloping", 0),
-                        ("Flat", 1),
-                        ("Downsloping", 2)
-                    ],
-                    format_func=lambda x: x[0],
-                    help="Slope of peak exercise ST segment"
-                )
-            with col_l:
-                num_vessels = st.selectbox(
-                    "Number of Major Vessels",
-                    options=[0, 1, 2, 3, 4],
-                    index=1,
-                    help="Number of major vessels colored by fluoroscopy"
-                )
-            
-            # Row 7: Thalassemia
-            thalassemia = st.selectbox(
-                "Thalassemia",
-                options=[
-                    ("Normal", 0),
-                    ("Fixed Defect", 1),
-                    ("Reversible Defect", 2),
-                    ("Not Described", 3)
-                ],
-                format_func=lambda x: x[0],
-                help="Thalassemia blood disorder type"
-            )
-            
-            # Submit button
-            submitted = st.form_submit_button(
-                "🔮 Predict Heart Disease Risk",
-                use_container_width=True
-            )
-    
-    with col2:
-        st.markdown("### 📊 Prediction Results")
         
-        if submitted:
-            # Prepare data for API
-            patient_data = {
-                "age": age,
-                "sex": sex[1],
-                "chest_pain_type": chest_pain_type[1],
-                "resting_blood_pressure": resting_bp,
-                "cholesterol": cholesterol,
-                "fasting_blood_sugar": fasting_bs[1],
-                "resting_ecg": resting_ecg[1],
-                "max_heart_rate": max_hr,
-                "exercise_induced_angina": exercise_angina[1],
-                "st_depression": st_depression,
-                "st_slope": st_slope[1],
-                "num_major_vessels": num_vessels,
-                "thalassemia": thalassemia[1]
-            }
+        with col2:
+            st.markdown("### 📊 Prediction Results")
             
-            # Show loading spinner
-            with st.spinner("Analyzing patient data..."):
-                time.sleep(0.5)  # Brief delay for UX
-                result = make_prediction(patient_data)
+            if submitted:
+                # Prepare data for API
+                patient_data = {
+                    "age": age,
+                    "sex": sex[1],
+                    "chest_pain_type": chest_pain_type[1],
+                    "resting_blood_pressure": resting_bp,
+                    "cholesterol": cholesterol,
+                    "fasting_blood_sugar": fasting_bs[1],
+                    "resting_ecg": resting_ecg[1],
+                    "max_heart_rate": max_hr,
+                    "exercise_induced_angina": exercise_angina[1],
+                    "st_depression": st_depression,
+                    "st_slope": st_slope[1],
+                    "num_major_vessels": num_vessels,
+                    "thalassemia": thalassemia[1]
+                }
+                
+                # Show loading spinner
+                with st.spinner("Analyzing patient data..."):
+                    time.sleep(0.5)  # Brief delay for UX
+                    result = make_prediction(patient_data)
+                
+                if result["success"]:
+                    data = result["data"]
+                    prediction = data["prediction"]
+                    probability = data["probability"]
+                    risk_level = data["risk_level"]
+                    
+                    # Display result card
+                    if prediction == 1:
+                        st.markdown(f"""
+                        <div class="result-card result-positive">
+                            <h2 style="margin:0;">⚠️ Heart Disease Detected</h2>
+                            <p style="font-size:1.2rem; margin:0.5rem 0;">Risk Level: <strong>{risk_level}</strong></p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div class="result-card result-negative">
+                            <h2 style="margin:0;">✅ No Heart Disease Detected</h2>
+                            <p style="font-size:1.2rem; margin:0.5rem 0;">Risk Level: <strong>{risk_level}</strong></p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Probability meter
+                    st.markdown("#### 📈 Disease Probability")
+                    prob_percentage = probability * 100
+                    
+                    # Color based on probability
+                    if prob_percentage < 25:
+                        bar_color = "#51cf66"
+                    elif prob_percentage < 50:
+                        bar_color = "#fcc419"
+                    elif prob_percentage < 75:
+                        bar_color = "#ff922b"
+                    else:
+                        bar_color = "#ff6b6b"
+                    
+                    st.progress(probability)
+                    st.markdown(f"<h3 style='text-align:center; color:{bar_color};'>{prob_percentage:.1f}%</h3>", 
+                               unsafe_allow_html=True)
+                    
+                    # Additional metrics
+                    col_m1, col_m2 = st.columns(2)
+                    with col_m1:
+                        st.metric("Confidence", data["confidence"])
+                    with col_m2:
+                        st.metric("Risk Level", risk_level)
+                    
+                    # Recommendation
+                    st.markdown("#### 💬 Recommendation")
+                    st.info(data["message"])
+                    
+                    # Medical disclaimer
+                    st.warning("""
+                    ⚠️ **Important Disclaimer:**
+                    
+                    This prediction is generated by a machine learning model and should NOT be used as a 
+                    substitute for professional medical advice, diagnosis, or treatment. Always seek the 
+                    advice of your physician or other qualified health provider with any questions you may 
+                    have regarding a medical condition.
+                    """)
+                    
+                else:
+                    st.error(f"❌ Prediction failed: {result['error']}")
+                    st.info("""
+                    **Troubleshooting:**
+                    1. Ensure the backend server is running
+                    2. Check if the API URL is correct
+                    3. Verify the model files are in place
+                    """)
             
-            if result["success"]:
-                data = result["data"]
-                prediction = data["prediction"]
-                probability = data["probability"]
-                risk_level = data["risk_level"]
-                
-                # Display result card
-                if prediction == 1:
-                    st.markdown(f"""
-                    <div class="result-card result-positive">
-                        <h2 style="margin:0;">⚠️ Heart Disease Detected</h2>
-                        <p style="font-size:1.2rem; margin:0.5rem 0;">Risk Level: <strong>{risk_level}</strong></p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="result-card result-negative">
-                        <h2 style="margin:0;">✅ No Heart Disease Detected</h2>
-                        <p style="font-size:1.2rem; margin:0.5rem 0;">Risk Level: <strong>{risk_level}</strong></p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                # Probability meter
-                st.markdown("#### 📈 Disease Probability")
-                prob_percentage = probability * 100
-                
-                # Color based on probability
-                if prob_percentage < 25:
-                    bar_color = "#51cf66"
-                elif prob_percentage < 50:
-                    bar_color = "#fcc419"
-                elif prob_percentage < 75:
-                    bar_color = "#ff922b"
-                else:
-                    bar_color = "#ff6b6b"
-                
-                st.progress(probability)
-                st.markdown(f"<h3 style='text-align:center; color:{bar_color};'>{prob_percentage:.1f}%</h3>", 
-                           unsafe_allow_html=True)
-                
-                # Additional metrics
-                col_m1, col_m2 = st.columns(2)
-                with col_m1:
-                    st.metric("Confidence", data["confidence"])
-                with col_m2:
-                    st.metric("Risk Level", risk_level)
-                
-                # Recommendation
-                st.markdown("#### 💬 Recommendation")
-                st.info(data["message"])
-                
-                # Medical disclaimer
-                st.warning("""
-                ⚠️ **Important Disclaimer:**
-                
-                This prediction is generated by a machine learning model and should NOT be used as a 
-                substitute for professional medical advice, diagnosis, or treatment. Always seek the 
-                advice of your physician or other qualified health provider with any questions you may 
-                have regarding a medical condition.
-                """)
-                
             else:
-                st.error(f"❌ Prediction failed: {result['error']}")
-                st.info("""
-                **Troubleshooting:**
-                1. Ensure the backend server is running
-                2. Check if the API URL is correct
-                3. Verify the model files are in place
-                """)
-        
-        else:
-            # Default state
-            st.markdown("""
-            <div class="info-card">
-                <h4>👋 Welcome!</h4>
-                <p>Enter patient information on the left and click <strong>Predict</strong> 
-                to get heart disease risk assessment.</p>
-                <p><em>All fields are required for accurate prediction.</em></p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            # Feature importance info
-            with st.expander("ℹ️ Understanding the Features"):
+                # Default state
                 st.markdown("""
-                | Feature | Description |
-                |---------|-------------|
-                | **Age** | Patient's age in years |
-                | **Sex** | Male or Female |
-                | **Chest Pain Type** | Type of chest pain (4 categories) |
-                | **Resting Blood Pressure** | Blood pressure when resting (mm Hg) |
-                | **Cholesterol** | Serum cholesterol level (mg/dl) |
-                | **Fasting Blood Sugar** | Blood sugar > 120 mg/dl (Yes/No) |
-                | **Resting ECG** | Electrocardiogram results (3 categories) |
-                | **Max Heart Rate** | Maximum heart rate during exercise |
-                | **Exercise Induced Angina** | Chest pain during exercise (Yes/No) |
-                | **ST Depression** | ST segment depression during exercise |
-                | **ST Slope** | Slope of ST segment (3 categories) |
-                | **Major Vessels** | Vessels colored by fluoroscopy (0-4) |
-                | **Thalassemia** | Blood disorder type (4 categories) |
-                """)
+                <div class="info-card">
+                    <h4>👋 Welcome!</h4>
+                    <p>Enter patient information on the left and click <strong>Predict</strong> 
+                    to get heart disease risk assessment.</p>
+                    <p><em>All fields are required for accurate prediction.</em></p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Feature importance info
+                with st.expander("ℹ️ Understanding the Features"):
+                    st.markdown("""
+                    | Feature | Description |
+                    |---------|-------------|
+                    | **Age** | Patient's age in years |
+                    | **Sex** | Male or Female |
+                    | **Chest Pain Type** | Type of chest pain (4 categories) |
+                    | **Resting Blood Pressure** | Blood pressure when resting (mm Hg) |
+                    | **Cholesterol** | Serum cholesterol level (mg/dl) |
+                    | **Fasting Blood Sugar** | Blood sugar > 120 mg/dl (Yes/No) |
+                    | **Resting ECG** | Electrocardiogram results (3 categories) |
+                    | **Max Heart Rate** | Maximum heart rate during exercise |
+                    | **Exercise Induced Angina** | Chest pain during exercise (Yes/No) |
+                    | **ST Depression** | ST segment depression during exercise |
+                    | **ST Slope** | Slope of ST segment (3 categories) |
+                    | **Major Vessels** | Vessels colored by fluoroscopy (0-4) |
+                    | **Thalassemia** | Blood disorder type (4 categories) |
+                    """)
+    
+    # ============================================
+    # TAB 2: MODEL INSIGHTS
+    # ============================================
+    with tab2:
+        st.markdown("### 🤖 Model Performance & Insights")
+        st.markdown("""
+        The following visualizations show the performance of different machine learning models 
+        trained on the heart disease dataset and the insights derived from the analysis.
+        """)
+        
+        # Model Comparison
+        st.markdown("#### 📊 Model Comparison")
+        st.markdown("""
+        We trained and compared **4 different classification algorithms**:
+        - Logistic Regression
+        - Decision Tree
+        - Random Forest (Best Performer)
+        - Support Vector Machine (SVM)
+        """)
+        
+        # Display model comparison chart
+        model_comparison_path = ASSETS_DIR / "model_comparison.png"
+        if model_comparison_path.exists():
+            img = Image.open(model_comparison_path)
+            st.image(img, caption="Model Performance Comparison - Accuracy, Precision, Recall, F1 Score, and ROC-AUC", use_column_width=True)
+        else:
+            st.info("Model comparison chart not available. Run training script to generate.")
+        
+        st.markdown("---")
+        
+        # Confusion Matrices
+        st.markdown("#### 🎯 Confusion Matrices")
+        st.markdown("""
+        Confusion matrices show the prediction accuracy breakdown for each model:
+        - **True Positives (TP):** Correctly predicted heart disease
+        - **True Negatives (TN):** Correctly predicted no heart disease
+        - **False Positives (FP):** Incorrectly predicted heart disease
+        - **False Negatives (FN):** Missed heart disease cases
+        """)
+        
+        confusion_matrices_path = ASSETS_DIR / "confusion_matrices.png"
+        if confusion_matrices_path.exists():
+            img = Image.open(confusion_matrices_path)
+            st.image(img, caption="Confusion Matrices for All Models", use_column_width=True)
+        else:
+            st.info("Confusion matrices not available. Run training script to generate.")
+        
+        st.markdown("---")
+        
+        # Feature Importance
+        st.markdown("#### 🔑 Feature Importance")
+        st.markdown("""
+        Feature importance shows which clinical parameters have the most influence on predicting heart disease.
+        **Top 5 Most Important Features:**
+        1. **Max Heart Rate** - Lower max heart rate indicates higher risk
+        2. **Age** - Older patients have higher risk
+        3. **Cholesterol** - Higher cholesterol increases risk
+        4. **Resting Blood Pressure** - Elevated BP is a risk factor
+        5. **ST Depression** - Higher values suggest cardiac stress
+        """)
+        
+        feature_importance_path = ASSETS_DIR / "feature_importance.png"
+        if feature_importance_path.exists():
+            img = Image.open(feature_importance_path)
+            st.image(img, caption="Feature Importance - Random Forest Model", use_column_width=True)
+        else:
+            st.info("Feature importance chart not available. Run training script to generate.")
+        
+        # Model Performance Summary
+        st.markdown("---")
+        st.markdown("#### 📈 Best Model Summary")
+        
+        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+        with col_s1:
+            st.metric("Model", "Random Forest")
+        with col_s2:
+            st.metric("ROC-AUC", "76.17%")
+        with col_s3:
+            st.metric("Recall", "75.00%")
+        with col_s4:
+            st.metric("F1 Score", "71.74%")
+    
+    # ============================================
+    # TAB 3: DATA ANALYSIS
+    # ============================================
+    with tab3:
+        st.markdown("### 📈 Exploratory Data Analysis")
+        st.markdown("""
+        The following visualizations provide insights into the heart disease dataset used for training the model.
+        """)
+        
+        # Dataset Overview
+        st.markdown("#### 📋 Dataset Overview")
+        col_d1, col_d2, col_d3, col_d4 = st.columns(4)
+        with col_d1:
+            st.metric("Total Samples", "400")
+        with col_d2:
+            st.metric("Features", "13")
+        with col_d3:
+            st.metric("No Disease", "178 (44.5%)")
+        with col_d4:
+            st.metric("Disease", "222 (55.5%)")
+        
+        st.markdown("---")
+        
+        # EDA Visualization
+        st.markdown("#### 📊 Data Distribution Analysis")
+        eda_path = ASSETS_DIR / "eda_visualization.png"
+        if eda_path.exists():
+            img = Image.open(eda_path)
+            st.image(img, caption="Exploratory Data Analysis - Target Distribution, Age Distribution, and Feature Correlations", use_column_width=True)
+        else:
+            st.info("EDA visualization not available. Run training script to generate.")
+        
+        st.markdown("---")
+        
+        # Correlation Heatmap
+        st.markdown("#### 🔥 Feature Correlation Heatmap")
+        st.markdown("""
+        The correlation heatmap shows relationships between all features in the dataset.
+        Strong correlations (positive or negative) indicate features that tend to vary together.
+        """)
+        
+        correlation_path = ASSETS_DIR / "correlation_heatmap.png"
+        if correlation_path.exists():
+            img = Image.open(correlation_path)
+            st.image(img, caption="Feature Correlation Heatmap", use_column_width=True)
+        else:
+            st.info("Correlation heatmap not available. Run training script to generate.")
+        
+        st.markdown("---")
+        
+        # Medical Insights
+        st.markdown("#### 🏥 Medical Insights")
+        st.markdown("""
+        **Key Risk Factors Identified:**
+        
+        | Factor | High Risk Indicator |
+        |--------|---------------------|
+        | **Age** | > 55 years |
+        | **Max Heart Rate** | < 140 bpm during exercise |
+        | **Chest Pain Type** | Asymptomatic (Type 3) |
+        | **ST Depression** | > 1.5 during exercise |
+        | **Number of Vessels** | > 1 vessel colored |
+        | **Exercise Angina** | Present |
+        
+        ⚠️ **Note:** These are statistical observations from the dataset and should not be used for self-diagnosis.
+        """)
     
     # Footer
     st.markdown("---")
